@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace ChatX.Controllers
 {
     [ApiController]
-    [Route("[controller")]
+    [Route("[controller]")]
     public class MessageController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -21,6 +21,7 @@ namespace ChatX.Controllers
             if (string.IsNullOrWhiteSpace(messageDto.Body))
                 return BadRequest("Message body or attachment is required");
 
+            return Ok("Message Send");
         }
 
     }
