@@ -40,7 +40,11 @@ namespace ChatX.Controllers
                 return Unauthorized("Password is Wrong");
             }
 
-            return Ok("Login Successfully");
+            return Ok(new
+            {
+                Status = true,
+                Message = "Login Successful"
+            });
         }
 
         [HttpPost("Logout")]

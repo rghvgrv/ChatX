@@ -1,13 +1,19 @@
-import './App.css'
-import Login from './components/Login'
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Login from "./components/Login";
+import ConversationList from "./components/ConversationList";
+import ConversationPage from "./components/ConversationPage";
+import ChatPage from "./components/ChatPage";
+import "./App.css";
 
-function App() {
-
+export default function App() {
   return (
-    <>
-      <Login />
-    </>
-  )
+    <Router>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/conversations" element={<ConversationList />} />
+        <Route path="/conversation/:conversationId" element={<ConversationPage />} />
+        <Route path="/chat" element={<ChatPage />} />
+      </Routes>
+    </Router>
+  );
 }
-
-export default App

@@ -1,136 +1,83 @@
-import { useState } from 'react';
-import '../styles/Login.css';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-export default function Login() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [showPassword, setShowPassword] = useState(false);
-    const [remember, setRemember] = useState(false);
-    const [errors, setErrors] = useState({});
-    const [submitting, setSubmitting] = useState(false);
-    const [message, setMessage] = useState('');
+export default function LoginPage() {
+    const [loginEmail, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+    const navigate = useNavigate();
 
-    function validate() {
-        const next = {};
-        if (!email.trim()) {
-            next.email = 'Email is required';
-        } else if (!/^\S+@\S+\.\S+$/.test(email)) {
-            next.email = 'Enter a valid email';
-        }
-        if (!password) {
-            next.password = 'Password is required';
-        }
-        return next;
-    }
-
-    async function handleSubmit(e) {
-        e.preventDefault();
-        setMessage('');
-        const v = validate();
-        setErrors(v);
-        if (Object.keys(v).length > 0) return;
-
-        setSubmitting(true);
+    const handleLogin = async () => {
         try {
-            const res = await fetch('https://localhost:7054/Auth/Login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    loginEmail: email,
-                    password: password,
-                }),
+            setLoading(true);
+            setError("");
+
+            // Step 1: Call Login API
+            const loginResponse = await fetch("https://localhost:7054/Auth/Login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ loginEmail, password }),
             });
 
-            const data = await res.json().catch(() => ({}));
+            if (!loginResponse.ok) throw new Error("Login failed");
 
-            if (!res.ok) {
-                const apiMsg = data?.message || data?.error || 'Login failed. Please try again.';
-                setMessage(apiMsg);
-                return;
-            }
-            setMessage(`Logged in as ${email}${remember ? ' (remembered)' : ''}`);
+            // Step 2: Store email
+            localStorage.setItem("chatx_email", loginEmail);
 
-            // TODO: navigate to your app's main page (e.g., using react-router)
-            // navigate('/chat');
+            // Step 3: Fetch conversations for this user
+            const convResponse = await fetch(
+                `https://localhost:7054/Conversation/ConversationForUser/${loginEmail}`
+            );
+
+            if (!convResponse.ok) throw new Error("Failed to load conversations");
+
+            const data = await convResponse.json();
+
+            // Step 4: Cache conversations and navigate
+            localStorage.setItem("chatx_conversations", JSON.stringify(data));
+            navigate("/chat");
         } catch (err) {
-            setMessage('Unable to reach server. Check your connection.');
+            setError(err.message || "Something went wrong");
         } finally {
-            setSubmitting(false);
+            setLoading(false);
         }
-    }
+    };
 
     return (
-        <>
-            <div className="login-container">
-                <h1 className="title-h1"> Welcome to ChatX</h1>
-                <form onSubmit={handleSubmit} className="login-card">
-                    <h2 className="login-title">Sign in</h2>
+        <div className="flex items-center justify-center h-screen bg-gray-100">
+            <div className="bg-white shadow-lg rounded-2xl w-full max-w-md p-6">
+                <h1 className="text-3xl font-bold text-center text-blue-600 mb-2">
+                    ChatX
+                </h1>
+                <p className="text-center text-gray-500 mb-6">Login to continue</p>
 
-                    <div className="field">
-                        <label htmlFor="email" className="label">Email</label>
-                        <input
-                            id="email"
-                            type="email"
-                            placeholder="you@example.com"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="input"
-                            style={{ borderColor: errors.email ? '#e11d48' : '#e5e7eb' }}
-                            disabled={submitting}
-                            autoComplete="email"
-                        />
-                        {errors.email && <span className="error">{errors.email}</span>}
-                    </div>
+                <div className="flex flex-col space-y-4">
+                    <input
+                        type="email"
+                        placeholder="Email"
+                        value={loginEmail}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <input
+                        type="password"
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    {error && <p className="text-red-500 text-sm">{error}</p>}
 
-                    <div className="field">
-                        <label htmlFor="password" className="label">Password</label>
-                        <div className="password-wrapper">
-                            <input
-                                id="password"
-                                type={showPassword ? 'text' : 'password'}
-                                placeholder="Your password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="input"
-                                style={{ borderColor: errors.password ? '#e11d48' : '#e5e7eb' }}
-                                disabled={submitting}
-                                autoComplete="current-password"
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword((s) => !s)}
-                                className="toggle-btn"
-                                tabIndex={-1}
-                            >
-                                {showPassword ? 'Hide' : 'Show'}
-                            </button>
-                        </div>
-                        {errors.password && <span className="error">{errors.password}</span>}
-                    </div>
-
-                    <div className="row">
-                        <label className="checkbox-label">
-                            <input
-                                type="checkbox"
-                                checked={remember}
-                                onChange={(e) => setRemember(e.target.checked)}
-                                disabled={submitting}
-                                style={{ marginRight: 8 }}
-                            />
-                            Remember me
-                        </label>
-                        <a href="#" className="link" onClick={(e) => e.preventDefault()}>Forgot password?</a>
-                    </div>
-
-                    <button type="submit" disabled={submitting} className="submit-btn" style={{ opacity: submitting ? 0.7 : 1 }}>
-                        {submitting ? 'Signing in…' : 'Sign in'}
+                    <button
+                        onClick={handleLogin}
+                        disabled={loading}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg font-semibold transition"
+                    >
+                        {loading ? "Logging in..." : "Login"}
                     </button>
-
-                    {message && <div className="note">{message}</div>}
-                </form>
+                </div>
             </div>
-        </>
+        </div>
     );
 }

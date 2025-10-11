@@ -45,5 +45,12 @@ namespace ChatX.DTO
         public string Body { get; set; } = null!;
         public DateTime CreatedAt { get; set; }
     }
-
+    /// <summary>
+    /// Send Message DTO
+    /// </summary>
+    public class SendMessageDto
+    {
+        public string Body { get; set; } = null!;
+        public string? AttachmentUrl { get; set; }
+    }
 }
